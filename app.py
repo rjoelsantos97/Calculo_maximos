@@ -103,8 +103,8 @@ def calcular_stock_maximo(row, config_estoque, armazem, tipo, config_limite, sto
 # Aplicar o cálculo do stock máximo e a classificação ABCDEF para cada armazém
 def calcular_resultados(dados_vendas, config_estoque, config_limite, stock_manual):
     for armazem, tipo in tipo_armazem.items():
-        dados_vendas[f'ABCDEF_{armazem}'] = dados_vendas[armazem].apply(lambda x: obter_abcdef(x, config_estoque, 'Normal'))
-        dados_vendas[f'Stock_Maximo_{armazem}'] = dados_vendas.apply(
+        dados_vendas[f'ABC {armazem}'] = dados_vendas[armazem].apply(lambda x: obter_abcdef(x, config_estoque, 'Normal'))
+        dados_vendas[f'{armazem} SM'] = dados_vendas.apply(
             lambda row: calcular_stock_maximo(row, config_estoque, armazem, tipo, config_limite, stock_manual), axis=1
         )
     return dados_vendas
