@@ -88,9 +88,9 @@ if uploaded_vendas and uploaded_configuracao and uploaded_limite and uploaded_st
     config_limite = pd.read_excel(uploaded_limite)
     stock_manual = pd.read_excel(uploaded_stock_manual)
     
-    # Converter colunas 'Vendas' para int
-    config_estoque['Vendas'] = config_estoque['Vendas'].astype(int)
-    config_limite['Vendas'] = config_limite['Vendas'].astype(int)
+    # Converter colunas 'Vendas' para int, ignorando erros
+    config_estoque['Vendas'] = pd.to_numeric(config_estoque['Vendas'], errors='coerce').fillna(0).astype(int)
+    config_limite['Vendas'] = pd.to_numeric(config_limite['Vendas'], errors='coerce').fillna(0).astype(int)
     
     # Mostrar os dados carregados
     st.subheader('Dados de Vendas')
