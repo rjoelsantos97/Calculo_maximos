@@ -12,7 +12,7 @@ def arredondar_excesso(valor, multiplo):
 def obter_abcdef(vendas_armazem, config_estoque, tipo):
     config_tipo = config_estoque[config_estoque['Tipo'] == tipo]
     for _, config in config_tipo.iterrows():
-        if vendas_armazem >= config['Vendas']:
+        if vendas_armazem >= int(config['Vendas']):
             return config['ABC']
     return 'F'  # Retorna 'F' se nenhuma condição for atendida
 
@@ -20,7 +20,7 @@ def obter_abcdef(vendas_armazem, config_estoque, tipo):
 def obter_configuracao_estoque(vendas_armazem, config_estoque, tipo):
     config_tipo = config_estoque[config_estoque['Tipo'] == tipo]
     for _, config in config_tipo.iterrows():
-        if vendas_armazem >= config['Vendas']:
+        if vendas_armazem >= int(config['Vendas']):
             return config
     return config_tipo.iloc[-1]  # Retorna a última linha se nenhuma condição for atendida
 
@@ -87,6 +87,10 @@ if uploaded_vendas and uploaded_configuracao and uploaded_limite and uploaded_st
     config_estoque = pd.read_excel(uploaded_configuracao)
     config_limite = pd.read_excel(uploaded_limite)
     stock_manual = pd.read_excel(uploaded_stock_manual)
+    
+    # Converter colunas 'Vendas' para int
+    config_estoque['Vendas'] = config_estoque['Vendas'].astype(int)
+    config_limite['Vendas'] = config_limite['Vendas'].astype(int)
     
     # Mostrar os dados carregados
     st.subheader('Dados de Vendas')
