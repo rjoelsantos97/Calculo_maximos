@@ -64,6 +64,8 @@ def calcular_stock_maximo(row, config_estoque, armazem, tipo, config_limite, sto
         return stock_manual_valor  # Usa o valor do stock manual, mesmo que seja 0
     
     # Verificar se as vendas do armazém são suficientes conforme o limite
+    if row['Tipodesc'] not in config_limite['Tipodesc'].values:
+        return 0
     vendas_minimas = int(config_limite.loc[config_limite['Tipodesc'] == row['Tipodesc'], armazem].values[0])
     if vendas_armazem < vendas_minimas:
         return 0
@@ -102,12 +104,35 @@ def calcular_stock_maximo(row, config_estoque, armazem, tipo, config_limite, sto
 
 # Aplicar o cálculo do stock máximo e a classificação ABCDEF para cada armazém
 def calcular_resultados(dados_vendas, config_estoque, config_limite, stock_manual):
+    resultados = dados_vendas.copy()
     for armazem, tipo in tipo_armazem.items():
-        dados_vendas[f'ABC {armazem}'] = dados_vendas[armazem].apply(lambda x: obter_abcdef(x, config_estoque, 'Normal'))
-        dados_vendas[f'{armazem} SM'] = dados_vendas.apply(
+        resultados[f'ABCDEF_{armazem}'] = resultados[armazem].apply(lambda x: obter_abcdef(x, config_estoque, 'Normal'))
+        resultados[f'Stock_Maximo_{armazem}'] = resultados.apply(
             lambda row: calcular_stock_maximo(row, config_estoque, armazem, tipo, config_limite, stock_manual), axis=1
         )
-    return dados_vendas
+        resultados[f'Valor_Stock_{armazem}'] = resultados[f'Stock_Maximo_{armazem}'] * resultados['P5PT']
+    return resultados
+
+# Função para mostrar alertas
+def mostrar_alertas(dados_vendas, config_limite):
+    tipodesc_vendas = set(dados_vendas['Tipodesc'])
+    tipodesc_limite = set(config_limite['Tipodesc'])
+    diff = tipodesc_vendas - tipodesc_limite
+    if diff:
+        st.warning(f"As seguintes Tipodesc estão nas vendas mas não no ficheiro limite: {', '.join(diff)}")
+
+# Função para análise dos valores de stock
+def analise_valores(resultados):
+    st.subheader("Análise de Valores de Stock")
+    for armazem in tipo_armazem.keys():
+        total_valor = resultados[f'Valor_Stock_{armazem}'].sum()
+        st.write(f"Total de Valor de Stock em {armazem}: {total_valor:.2f}")
+
+    st.subheader("Análise de Valores de Stock por ABC")
+    for armazem in tipo_armazem.keys():
+        st.write(f"Valores de Stock em {armazem} por ABC:")
+        abc_valores = resultados.groupby(f'ABCDEF_{armazem}')[f'Valor_Stock_{armazem}'].sum()
+        st.write(abc_valores)
 
 # Interface do Streamlit
 def main():
@@ -117,8 +142,12 @@ def main():
     
     if dados_vendas is not None and config_estoque is not None and config_limite is not None and stock_manual is not None:
         st.write("Dados carregados com sucesso!")
+        mostrar_alertas(dados_vendas, config_limite)
         resultados = calcular_resultados(dados_vendas, config_estoque, config_limite, stock_manual)
         st.write(resultados)
+        
+        # Análise dos valores de stock
+        analise_valores(resultados)
         
         # Permitir o download do arquivo de resultados
         csv = resultados.to_csv(index=False).encode('utf-8')
