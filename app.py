@@ -3,7 +3,7 @@ import pandas as pd
 import math
 
 # Função para carregar os dados dos arquivos de Excel
-@st.cache_data
+@st.cache
 def carregar_dados(file_vendas, file_config_estoque, file_config_limite, file_stock_manual):
     dados_vendas = pd.read_excel(file_vendas)
     config_estoque = pd.read_excel(file_config_estoque)
@@ -103,7 +103,7 @@ def calcular_stock_maximo(row, config_estoque, armazem, tipo, config_limite, sto
         return arredondar_excesso(valor, qtd_veiculo)
 
 # Aplicar o cálculo do stock máximo e a classificação ABCDEF para cada armazém
-@st.cache_data
+@st.cache
 def calcular_resultados(dados_vendas, config_estoque, config_limite, stock_manual):
     resultados = dados_vendas.copy()
     for armazem, tipo in tipo_armazem.items():
