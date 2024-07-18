@@ -90,6 +90,12 @@ def calcular_stock_maximo(row, config_estoque, armazem, tipo, config_limite, sto
         calculo = config['calculo_Local']
     
     # Definir o valor de estoque com base na configuração
+    if tipo_config == 'Direto':
+        if calculo == 'sm':
+            return arredondar_excesso(vendas_armazem / 52 * valor, qtd_veiculo)
+        else:  # 'un'
+            return arredondar_excesso(valor, qtd_veiculo)
+    
     if armazem == 'SMFeira' and tipo_config == 'Normal':
         total_vendas = sum([row[coluna] for coluna in tipo_armazem])
         if calculo == 'sm':
