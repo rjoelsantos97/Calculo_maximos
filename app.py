@@ -3,19 +3,13 @@ import pandas as pd
 import math
 
 # Função para carregar os dados dos arquivos de Excel
-def carregar_dados():
-    dados_vendas = st.file_uploader("Carregar arquivo de vendas", type=["xlsx"])
-    config_estoque = st.file_uploader("Carregar arquivo de configuração", type=["xlsx"])
-    config_limite = st.file_uploader("Carregar arquivo de limite", type=["xlsx"])
-    stock_manual = st.file_uploader("Carregar arquivo de stock manual", type=["xlsx"])
-
-    if dados_vendas and config_estoque and config_limite and stock_manual:
-        return (pd.read_excel(dados_vendas),
-                pd.read_excel(config_estoque),
-                pd.read_excel(config_limite),
-                pd.read_excel(stock_manual))
-    else:
-        return None, None, None, None
+@st.cache_data
+def carregar_dados(file_vendas, file_config_estoque, file_config_limite, file_stock_manual):
+    dados_vendas = pd.read_excel(file_vendas)
+    config_estoque = pd.read_excel(file_config_estoque)
+    config_limite = pd.read_excel(file_config_limite)
+    stock_manual = pd.read_excel(file_stock_manual)
+    return dados_vendas, config_estoque, config_limite, stock_manual
 
 # Mapeamento dos tipos de armazém para cada cidade
 tipo_armazem = {
@@ -109,6 +103,7 @@ def calcular_stock_maximo(row, config_estoque, armazem, tipo, config_limite, sto
         return arredondar_excesso(valor, qtd_veiculo)
 
 # Aplicar o cálculo do stock máximo e a classificação ABCDEF para cada armazém
+@st.cache_data
 def calcular_resultados(dados_vendas, config_estoque, config_limite, stock_manual):
     resultados = dados_vendas.copy()
     for armazem, tipo in tipo_armazem.items():
@@ -140,6 +135,15 @@ def analise_valores(resultados):
         abc_valores = resultados.groupby(f'ABCDEF_{armazem}')[f'Valor_Stock_{armazem}'].sum()
         st.write(abc_valores)
 
+# Função para exibir resultados em páginas
+def exibir_resultados_paginados(dataframe, page_size=20):
+    total_rows = len(dataframe)
+    total_pages = (total_rows // page_size) + 1
+    page = st.number_input('Página', 1, total_pages, 1)
+    start_row = (page - 1) * page_size
+    end_row = min(start_row + page_size, total_rows)
+    st.write(dataframe[start_row:end_row])
+
 # Interface do Streamlit
 def main():
     st.title("Cálculo de Stock Máximo")
@@ -150,7 +154,9 @@ def main():
         st.write("Dados carregados com sucesso!")
         mostrar_alertas(dados_vendas, config_limite)
         resultados = calcular_resultados(dados_vendas, config_estoque, config_limite, stock_manual)
-        st.write(resultados)
+        
+        # Exibir resultados paginados
+        exibir_resultados_paginados(resultados)
         
         # Análise dos valores de stock
         analise_valores(resultados)
