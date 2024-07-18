@@ -107,7 +107,7 @@ def calcular_stock_maximo(row, config_estoque, armazem, tipo, config_limite, sto
 def calcular_resultados(dados_vendas, config_estoque, config_limite, stock_manual):
     resultados = dados_vendas.copy()
     for armazem, tipo in tipo_armazem.items():
-        resultados[f'ABCDEF_{armazem}'] = resultados[armazem].apply(lambda x: obter_abcdef(x, config_estoque, 'Normal'))
+        resultados[f'ABCDEF_{armazem}'] = resultados.apply(lambda row: obter_abcdef(row[armazem], config_estoque, 'Direto' if row['Tipodesc'] in config_limite[config_limite['Stock Direto'] == 1]['Tipodesc'].values else 'Normal'), axis=1)
         resultados[f'Stock_Maximo_{armazem}'] = resultados.apply(
             lambda row: calcular_stock_maximo(row, config_estoque, armazem, tipo, config_limite, stock_manual), axis=1
         )
@@ -148,9 +148,13 @@ def exibir_resultados_paginados(dataframe, page_size=20):
 def main():
     st.title("Cálculo de Stock Máximo")
     
-    dados_vendas, config_estoque, config_limite, stock_manual = carregar_dados()
-    
-    if dados_vendas is not None and config_estoque is not None and config_limite is not None and stock_manual is not None:
+    dados_vendas = st.file_uploader("Carregar arquivo de vendas", type=["xlsx"])
+    config_estoque = st.file_uploader("Carregar arquivo de configuração", type=["xlsx"])
+    config_limite = st.file_uploader("Carregar arquivo de limite", type=["xlsx"])
+    stock_manual = st.file_uploader("Carregar arquivo de stock manual", type=["xlsx"])
+
+    if dados_vendas and config_estoque and config_limite and stock_manual:
+        dados_vendas, config_estoque, config_limite, stock_manual = carregar_dados(dados_vendas, config_estoque, config_limite, stock_manual)
         st.write("Dados carregados com sucesso!")
         mostrar_alertas(dados_vendas, config_limite)
         resultados = calcular_resultados(dados_vendas, config_estoque, config_limite, stock_manual)
